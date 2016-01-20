@@ -1,1 +1,2 @@
-export * from "./account-manager";
+import * as AccountManager from "./account-manager";
+export = AccountManager;

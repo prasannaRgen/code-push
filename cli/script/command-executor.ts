@@ -18,6 +18,7 @@ import * as yazl from "yazl";
 import wordwrap = require("wordwrap");
 
 import * as cli from "../definitions/cli";
+import * as AccountManager from "code-push";
 import { AccessKey, AccountManager, App, Deployment, DeploymentKey, Package } from "code-push";
 var packageJson = require("../package.json");
 import Promise = Q.Promise;

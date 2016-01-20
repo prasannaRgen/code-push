@@ -6,7 +6,6 @@ var gulp = require("gulp");
 var plugins = require("gulp-load-plugins")();
 var through = require("through2");
 var tsc = require("typescript");
-var tsJsxLoader = require("ts-jsx-loader");
 var merge = require("merge2");
 var dtsGenerator = require("dts-generator");
 

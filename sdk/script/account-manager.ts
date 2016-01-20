@@ -34,7 +34,7 @@ interface PackageToUpload {
     isMandatory: boolean;
 }
 
-export class AccountManager {
+export default class AccountManager {
     private static API_VERSION = "v2";
 
     private _accessKey: string;
