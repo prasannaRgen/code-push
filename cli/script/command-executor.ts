@@ -12,7 +12,6 @@ import * as Q from "q";
 import * as recursiveFs from "recursive-fs";
 import * as semver from "semver";
 import slash = require("slash");
-import tryJSON = require("try-json");
 var Table = require("cli-table");
 import * as yazl from "yazl";
 import wordwrap = require("wordwrap");
@@ -389,16 +388,12 @@ function deploymentHistory(command: cli.IDeploymentHistoryCommand): Promise<void
 }
 
 function deserializeConnectionInfo(): IStandardLoginConnectionInfo|IAccessKeyLoginConnectionInfo {
-    var savedConnection: string;
-
     try {
-        savedConnection = fs.readFileSync(configFilePath, { encoding: "utf8" });
+        var savedConnection: string = fs.readFileSync(configFilePath, { encoding: "utf8" });
+        return JSON.parse(savedConnection);
     } catch (ex) {
         return;
     }
-
-    var credentialsObject: IStandardLoginConnectionInfo|IAccessKeyLoginConnectionInfo = tryJSON(savedConnection);
-    return credentialsObject;
 }
 
 function notifyAlreadyLoggedIn(): Promise<void> {
@@ -706,8 +701,8 @@ function printDeploymentList(command: cli.IDeploymentListCommand, deployments: D
         }
         
         if (showPackage) {
-            headers.push("Package Metadata");
-            headers.push("Metrics");
+            headers.push("Update Metadata");
+            headers.push("Install Metrics");
         }
         
         printTable(headers, (dataSource: any[]): void => {
@@ -738,7 +733,7 @@ function printDeploymentHistory(command: cli.IDeploymentHistoryCommand, packageH
         
         printJson(packageHistory);
     } else if (command.format === "table") {
-        printTable(["Label", "Release Time", "App Version", "Mandatory", "Description", "Metrics"], (dataSource: any[]) => {
+        printTable(["Label", "Release Time", "App Version", "Mandatory", "Description", "Install Metrics"], (dataSource: any[]) => {
             packageHistory.forEach((packageObject: Package) => {
                 var releaseTime: string = formatDate(packageObject.uploadTime);
                 var releaseSource: string;
@@ -788,7 +783,14 @@ function getPackageMetricsString(packageObject: PackageWithMetrics, showInstalls
         ? packageObject.metrics.active / packageObject.metrics.totalActive * 100
         : 0.0;
         
-    var percentString: string = (activePercent === 100.0 ? "100" : activePercent.toPrecision(2)) + "%";
+    var percentString: string;
+    if (activePercent === 100.0) {
+        percentString = "100%";
+    } else if (activePercent === 0.0) {
+        percentString = "0%";
+    } else {
+        percentString = activePercent.toPrecision(2) + "%";
+    }
     
     var numPending: number = packageObject.metrics.downloaded - packageObject.metrics.installed - packageObject.metrics.failed;
     var returnString: string = chalk.green("Active: ") + percentString + " (" + packageObject.metrics.active.toLocaleString() + " of " + packageObject.metrics.totalActive.toLocaleString() + ")";
@@ -1014,7 +1016,14 @@ function requestAccessToken(): Promise<string> {
 function serializeConnectionInfo(serverUrl: string, accessToken: string): void {
     // The access token should have been validated already (i.e.:  logging in).
     var json: string = tryBase64Decode(accessToken);
-    var standardLoginConnectionInfo: IStandardLoginConnectionInfo = tryJSON(json);
+    var standardLoginConnectionInfo: IStandardLoginConnectionInfo;
+    
+    try {
+        standardLoginConnectionInfo = JSON.parse(json);
+    } catch (ex) {
+        // If the JSON parsing threw an exception, then it is
+        // an access key and not a user session object.
+    }
 
     if (standardLoginConnectionInfo) {
         // This is a normal login.
