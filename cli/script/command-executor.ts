@@ -800,7 +800,7 @@ function getPackageMetricsString(packageObject: PackageWithMetrics, showInstalls
             returnString += " (" + numPending.toLocaleString() + " pending)";
         }
     } else {
-        returnString += "Pending: " + Math.max(numPending, 0).toLocaleString();
+        returnString += "\nPending: " + Math.max(numPending, 0).toLocaleString();
     }
     
     if (packageObject.metrics.failed) {
